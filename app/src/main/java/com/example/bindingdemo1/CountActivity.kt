@@ -11,12 +11,14 @@ class CountActivity: AppCompatActivity() {
 
     private lateinit var binding: CountActivityBinding
     private lateinit var viewModel: CountActivityViewModel
+    private lateinit var viewModelFactory: CountActivityViewModelFactory
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = DataBindingUtil.setContentView(this, R.layout.count_activity)
-        viewModel = ViewModelProvider(this).get(CountActivityViewModel::class.java)
+        viewModelFactory = CountActivityViewModelFactory(125)
+        viewModel = ViewModelProvider(this, viewModelFactory)[CountActivityViewModel::class.java]
 
         binding.apply {
             resultField.text = viewModel.getCount().toString()
@@ -31,9 +33,13 @@ class CountActivity: AppCompatActivity() {
     }
 }
 
-class CountActivityViewModel: ViewModel() {
+class CountActivityViewModel(startingTotal: Int): ViewModel() {
 
     private var count: Int = 0
+
+    init {
+        count = startingTotal
+    }
 
     fun getCount(): Int {
        return count
@@ -43,5 +49,14 @@ class CountActivityViewModel: ViewModel() {
         count += increment
         return count
     }
+}
 
+class CountActivityViewModelFactory(private val startingTotal: Int): ViewModelProvider.Factory {
+
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(CountActivityViewModel::class.java)) {
+            return CountActivityViewModel(startingTotal) as T
+        }
+        throw  IllegalArgumentException("Unknown View Model")
+    }
 }
