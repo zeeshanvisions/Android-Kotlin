@@ -3,6 +3,9 @@ package com.example.bindingdemo1
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.bindingdemo1.databinding.CountActivityBinding
@@ -20,13 +23,14 @@ class CountActivity: AppCompatActivity() {
         viewModelFactory = CountActivityViewModelFactory(125)
         viewModel = ViewModelProvider(this, viewModelFactory)[CountActivityViewModel::class.java]
 
-        binding.apply {
-            resultField.text = viewModel.getCount().toString()
+        viewModel.total.observe(this, Observer {
+            binding.resultField.text = it.toString()
+        })
 
+        binding.apply {
             addButton.setOnClickListener {
                 val count = editField.text.toString().toInt()
                 viewModel.incrementCount(count)
-                resultField.text = viewModel.getCount().toString()
                 editField.setText("0")
             }
         }
@@ -35,19 +39,16 @@ class CountActivity: AppCompatActivity() {
 
 class CountActivityViewModel(startingTotal: Int): ViewModel() {
 
-    private var count: Int = 0
+    private var count = MutableLiveData<Int>()
+    val total: LiveData<Int>
+        get() = count
 
     init {
-        count = startingTotal
+        count.value = startingTotal
     }
 
-    fun getCount(): Int {
-       return count
-    }
-
-    fun incrementCount(increment: Int): Int {
-        count += increment
-        return count
+    fun incrementCount(increment: Int) {
+        count.value = (count.value)?.plus(increment)
     }
 }
 
